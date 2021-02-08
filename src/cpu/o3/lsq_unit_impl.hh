@@ -1847,7 +1847,7 @@ LSQUnit<Impl>::squash(const InstSeqNum &squashed_num)
     if(cleanupLQExecd_on_Squash || cleanupLQInflight_on_Squash || cleanupL2Inv){
       if(squash_in_progress){
         assert(squashed_num <= squashfrom_seqnum);
-      } else {
+      } else if(loads != 0){ //只要没有需要clean的load，就不使用cleanupspec
         squash_in_progress = true;
       }
     
@@ -1907,7 +1907,7 @@ LSQUnit<Impl>::squash(const InstSeqNum &squashed_num)
       squashbuffer_empty = false;
       squashbuffer_emptying_started = false; 
 
-      if(issueBufferedCleanupReqs()){
+      if(squash_in_progress && issueBufferedCleanupReqs()){
         DPRINTF(LSQUnit,"Buffered CleanupReqs All Sent to Cache For Blocking Squash on [sn:%lli]\n",squashed_num);
       } else {
         DPRINTF(LSQUnit,"Buffered CleanupReqs Waiting for ROB-Head to be required inst for Squash on [sn:%lli]\n",squashed_num);
@@ -1915,7 +1915,7 @@ LSQUnit<Impl>::squash(const InstSeqNum &squashed_num)
     
       //Wait until all Acks Received & Clear LoadQ
     
-      if(clearLoadQueue()){
+      if(squash_in_progress && clearLoadQueue()){
         DPRINTF(LSQUnit,"LoadQ Finally Cleared For Blocking Squash on [sn:%lli]\n",squashed_num);
       } else{
         DPRINTF(LSQUnit,"LoadQ Will Get Cleared When Blocking CleanupAcks Received for Squash on [sn:%lli]\n",squashed_num);
